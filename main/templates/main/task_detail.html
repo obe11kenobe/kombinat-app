@@ -1,0 +1,178 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Задача: {{ task.title }}{% endblock %}
+
+{% block content %}
+<!-- Заголовок и навигация -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">{{ task.title }}</h1>
+    <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> К списку задач
+    </a>
+</div>
+
+<!-- Основная информация о задаче -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <strong>Статус:</strong> 
+                    <span class="badge bg-{% if task.status == 'pending' %}warning{% elif task.status == 'in_progress' %}info{% elif task.status == 'completed' %}success{% else %}secondary{% endif %} ms-2">
+                        {{ task.get_status_display }}
+                    </span>
+                </div>
+                <div class="mb-3">
+                    <strong>Исполнитель:</strong> 
+                    <span class="ms-2">{{ task.assignee.get_full_name|default:task.assignee.username }}</span>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <strong>Автор:</strong> 
+                    <span class="ms-2">{{ task.author.get_full_name|default:task.author.username }}</span>
+                </div>
+                <div class="mb-3">
+                    <strong>Срок выполнения:</strong> 
+                    <span class="ms-2">{{ task.deadline|date:"d.m.Y"|default:"Не указан" }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mb-0">
+            <strong>Описание:</strong>
+            <div class="mt-2 p-3 bg-light rounded">
+                {{ task.description|linebreaksbr|default:"Описание отсутствует" }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Формы обновления (только для автора или исполнителя) -->
+{% if user == task.author or user == task.assignee %}
+<div class="row mb-4">
+    <!-- Обновление статуса -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Обновить статус</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Новый статус</label>
+                        <select name="status" id="status" class="form-select">
+                            {% for value, label in statuses %}
+                                <option value="{{ value }}" {% if task.status == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" name="update_status" class="btn btn-primary w-100">Сохранить статус</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Обновление задачи -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Обновить задачу</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ update_form.assignee.id_for_label }}" class="form-label">Исполнитель</label>
+                        {{ update_form.assignee }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ update_form.deadline.id_for_label }}" class="form-label">Срок выполнения</label>
+                        {{ update_form.deadline }}
+                    </div>
+                    <button type="submit" name="update_task" class="btn btn-primary w-100">Обновить задачу</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Действия с задачей -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="mb-3">Действия с задачей</h5>
+                <div class="d-flex gap-2">
+                    {% if user == task.author %}
+                        <a href="{% url 'edit_task' pk=task.pk %}" class="btn btn-outline-primary">
+                            <i class="bi bi-pencil"></i> Редактировать
+                        </a>
+                        <a href="{% url 'delete_task' pk=task.pk %}" class="btn btn-outline-danger">
+                            <i class="bi bi-trash"></i> Удалить
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> К списку задач
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Секция комментариев (только для автора или исполнителя) -->
+{% if user == task.author or user == task.assignee %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Комментарии</h5>
+    </div>
+    <div class="card-body">
+        <!-- Список комментариев -->
+        {% for comment in comments %}
+            <div class="card mb-3 border-start border-info border-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="d-flex align-items-center">
+                            <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                 style="width: 32px; height: 32px; font-size: 14px; font-weight: 600;">
+                                {{ comment.author.first_name|first|default:comment.author.username|first|upper }}
+                            </div>
+                            <div>
+                                <strong class="text-dark">{{ comment.author.get_full_name|default:comment.author.username }}</strong>
+                            </div>
+                        </div>
+                        <small class="text-muted">{{ comment.created_at|date:"d.m.Y H:i" }}</small>
+                    </div>
+                    <p class="mb-0">{{ comment.text|linebreaksbr }}</p>
+                </div>
+            </div>
+        {% empty %}
+            <div class="text-center py-4">
+                <div class="text-muted mb-2">
+                    <i class="bi bi-chat-dots" style="font-size: 2rem;"></i>
+                </div>
+                <p class="text-muted mb-0">Комментариев пока нет</p>
+            </div>
+        {% endfor %}
+        
+        <!-- Форма добавления комментария -->
+        <div class="mt-4">
+            <h6 class="mb-3">Добавить комментарий</h6>
+            <form method="post" action="">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="{{ comment_form.text.id_for_label }}" class="form-label">Текст комментария</label>
+                    {{ comment_form.text }}
+                </div>
+                <button type="submit" name="add_comment" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Добавить комментарий
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

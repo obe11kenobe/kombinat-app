@@ -1,0 +1,82 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Кабинет руководителя{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Кабинет руководителя</h1>
+    <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+        На главную
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h2 class="h5 mb-0">Заявки, ожидающие назначения исполнителя</h2>
+    </div>
+    <div class="card-body">
+        {% for req in requests %}
+            <div class="card mb-4 border-start border-warning border-3">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <h5 class="card-title mb-2">{{ req.title }}</h5>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <p class="card-text mb-1">
+                                        <span class="badge bg-warning">
+                                            {{ req.get_status_display }}
+                                        </span>
+                                    </p>
+                                    <p class="card-text text-muted small mb-0">
+                                        <strong>Отдел:</strong> {{ req.department.name }}
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="card-text text-muted small mb-0">
+                                        <strong>Автор:</strong> {{ req.requester.get_full_name|default:req.requester.username }}
+                                    </p>
+                                    <p class="card-text text-muted small mb-0">
+                                        <strong>Дата:</strong> {{ req.created_at|date:"d.m.Y H:i" }}
+                                    </p>
+                                </div>
+                            </div>
+                            <p class="card-text">{{ req.justification|default:"Описание отсутствует"|truncatewords:30 }}</p>
+                        </div>
+
+                        <div class="col-lg-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title mb-3">Назначить исполнителя</h6>
+
+                                    <form method="post" action="{% url 'manager_dashboard' %}" class="mb-3">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="request_id" value="{{ req.pk }}">
+                                        <div class="mb-3">
+                                            <label for="assignee-{{ req.pk }}" class="form-label">Выберите сотрудника</label>
+                                            <select name="assignee" id="assignee-{{ req.pk }}" class="form-select" required>
+                                                <option value="">Выберите...</option>
+                                                {% for employee in employees %}
+                                                    <option value="{{ employee.pk }}">{{ employee.get_full_name|default:employee.username }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <button type="submit" name="assign_request" class="btn btn-primary w-100">
+                                            Назначить
+                                        </button>
+                                    </form>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="text-center py-5">
+                <h5 class="text-muted">Нет заявок для назначения исполнителя</h5>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

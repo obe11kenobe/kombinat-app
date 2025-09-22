@@ -1,0 +1,118 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Главная страница{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Главная страница</h1>
+    <div class="d-flex gap-2">
+        <a class="btn btn-primary" href="{% url 'create_task' %}">
+            <i class="bi bi-plus-circle"></i> Создать задачу
+        </a>
+        <a class="btn btn-outline-primary" href="{% url 'request_list' %}">
+            <i class="bi bi-list-ul"></i> Мои заявки
+        </a>
+        {% if user.is_staff %}
+            <a class="btn btn-outline-secondary" href="{% url 'manager_dashboard' %}">
+                <i class="bi bi-person-gear"></i> Кабинет руководителя
+            </a>
+            <a class="btn btn-outline-info" href="{% url 'department_tasks' %}">
+                <i class="bi bi-diagram-3"></i> Задачи отдела
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Two-column layout -->
+<div class="row g-4">
+    <!-- Tasks Column (70% width) -->
+    <div class="col-12 col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="h5 mb-0">Мои задачи (назначенные мне)</h3>
+            </div>
+            <div class="card-body">
+                {% for task in tasks %}
+                    <div class="card mb-3 border-start border-{% if task.status == 'new' %}warning{% elif task.status == 'in_progress' %}info{% elif task.status == 'completed' %}success{% elif task.status == 'canceled' %}danger{% else %}secondary{% endif %} border-3">
+                        <div class="card-body">
+                            <h5 class="card-title mb-2">
+                                <a href="{% url 'task_detail' pk=task.pk %}" class="text-decoration-none text-dark">
+                                    {{ task.title }}
+                                </a>
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="card-text mb-1">
+                                        <span class="badge bg-{% if task.status == 'new' %}warning{% elif task.status == 'in_progress' %}info{% elif task.status == 'completed' %}success{% elif task.status == 'canceled' %}danger{% else %}secondary{% endif %}">
+                                            {{ task.get_status_display }}
+                                        </span>
+                                    </p>
+                                    {% if task.deadline %}
+                                        <p class="card-text text-muted small mb-0">
+                                            <i class="bi bi-calendar-event"></i> Срок: {{ task.deadline|date:"d.m.Y" }}
+                                        </p>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="card-text text-muted small mb-0">
+                                        <strong>Автор:</strong> {{ task.author.get_full_name|default:task.author.username }}
+                                    </p>
+                                    <p class="card-text text-muted small mb-0">
+                                        <strong>Приоритет:</strong> {{ task.get_priority_display }}
+                                    </p>
+                                </div>
+                            </div>
+                            {% if task.description %}
+                                <p class="card-text mt-2 text-muted">{{ task.description|truncatewords:20 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="text-center py-4">
+                        <div class="text-muted mb-3">
+                            <i class="bi bi-inbox" style="font-size: 3rem;"></i>
+                        </div>
+                        <p class="text-muted mb-0">У вас нет назначенных задач</p>
+                        <a href="{% url 'create_task' %}" class="btn btn-primary mt-2">
+                            <i class="bi bi-plus-circle"></i> Создать первую задачу
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Employees Column (30% width) -->
+    <div class="col-12 col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="h5 mb-0">Сотрудники отдела</h3>
+            </div>
+            <div class="card-body">
+                {% for employee in employees %}
+                    <div class="d-flex align-items-center mb-3 p-2 rounded" style="background-color: #f8f9fa;">
+                        <div class="flex-shrink-0">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" 
+                                 style="width: 40px; height: 40px; font-size: 16px; font-weight: 600;">
+                                {{ employee.first_name|first|default:employee.username|first|upper }}
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="fw-medium text-dark">{{ employee.get_full_name|default:employee.username }}</div>
+                            <small class="text-muted">{{ employee.email }}</small>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="text-center py-4">
+                        <div class="text-muted mb-2">
+                            <i class="bi bi-people" style="font-size: 2rem;"></i>
+                        </div>
+                        <p class="text-muted mb-0">Список сотрудников пуст</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
