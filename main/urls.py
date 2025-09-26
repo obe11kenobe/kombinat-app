@@ -24,6 +24,8 @@ urlpatterns = [
     # ДОБАВЛЕН ПУТЬ для просмотра руководителем всех задач отдела
     path('department/tasks/', views.department_tasks_view, name='department_tasks'),
 
+    path('tasks/update_status/', views.update_task_status_view, name='update_task_status'),
+
     # Главная страница
     path('', views.home_view, name='home'),
 ]

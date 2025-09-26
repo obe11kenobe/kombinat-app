@@ -1,13 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from django.contrib import messages
 from .forms import (
     CustomUserCreationForm, CustomAuthenticationForm, TaskCreationForm,
-    RequestForm, TaskUpdateForm, CommentForm
+    RequestForm, TaskUpdateForm, CommentForm, AttachmentForm
 )
-from .models import Task, Request, User, Comment
+from .models import Task, Request, User, Comment, Attachment
+import json
 
 # --- Аутентификация ---
 def register_view(request):
@@ -44,12 +45,21 @@ def logout_view(request):
 # --- Основные страницы ---
 @login_required
 def home_view(request):
-    user_tasks = Task.objects.filter(assignee=request.user)
+    # Получаем задачи, назначенные пользователю, и группируем их по статусу
+    all_tasks = Task.objects.filter(assignee=request.user)
+
+    new_tasks = all_tasks.filter(status=Task.Status.NEW)
+    in_progress_tasks = all_tasks.filter(status=Task.Status.IN_PROGRESS)
+    completed_tasks = all_tasks.filter(status=Task.Status.COMPLETED)
+
     department_employees = []
     if request.user.department:
         department_employees = User.objects.filter(department=request.user.department)
+
     context = {
-        'tasks': user_tasks,
+        'new_tasks': new_tasks,
+        'in_progress_tasks': in_progress_tasks,
+        'completed_tasks': completed_tasks,
         'employees': department_employees,
     }
     return render(request, 'main/home.html', context)
@@ -72,26 +82,37 @@ def create_task_view(request):
 @login_required
 def task_detail_view(request, pk):
     task = get_object_or_404(Task, pk=pk)
+
+    # 1. ПРОВЕРКА ПРАВ ДОСТУПА
     is_author = request.user == task.author
     is_assignee = request.user == task.assignee
-    is_leader = (request.user.is_staff and task.author.department == request.user.department)
+    is_leader = (request.user.is_staff and
+                 task.author.department and
+                 task.author.department == request.user.department)
+
     if not (is_author or is_assignee or is_leader):
         return HttpResponseForbidden("У вас нет доступа к этой задаче.")
 
+    # 2. ОБРАБОТКА POST-ЗАПРОСОВ (когда пользователь нажимает кнопки)
     if request.method == 'POST':
+        # Смена статуса
         if 'update_status' in request.POST:
             new_status = request.POST.get('status')
-            if new_status in [choice[0] for choice in Task.Status.choices]:
+            if new_status in Task.Status.values:
                 task.status = new_status
                 task.save()
                 messages.success(request, 'Статус задачи обновлён.')
-            return redirect('home')
+            return redirect('task_detail', pk=task.pk)
+
+        # Обновление задачи (исполнитель, срок)
         elif 'update_task' in request.POST:
             form = TaskUpdateForm(request.POST, instance=task)
             if form.is_valid():
                 form.save()
                 messages.success(request, 'Задача успешно обновлена.')
             return redirect('task_detail', pk=task.pk)
+
+        # Добавление комментария
         elif 'add_comment' in request.POST:
             form = CommentForm(request.POST)
             if form.is_valid():
@@ -102,12 +123,33 @@ def task_detail_view(request, pk):
                 messages.success(request, 'Комментарий добавлен.')
             return redirect('task_detail', pk=task.pk)
 
+        # Добавление файла
+        elif 'add_attachment' in request.POST:
+            form = AttachmentForm(request.POST, request.FILES)
+            if form.is_valid():
+                attachment = form.save(commit=False)
+                attachment.author = request.user
+                attachment.task = task
+                attachment.save()
+                messages.success(request, 'Файл успешно добавлен.')
+            return redirect('task_detail', pk=task.pk)
+
+    # 3. ПОДГОТОВКА ДАННЫХ ДЛЯ ОТОБРАЖЕНИЯ СТРАНИЦЫ (GET-запрос)
     comments = task.comments.all()
+    attachments = task.attachments.all()
+
     comment_form = CommentForm()
     update_form = TaskUpdateForm(instance=task)
+    attachment_form = AttachmentForm()
+
     context = {
-        'task': task, 'comments': comments, 'comment_form': comment_form,
-        'update_form': update_form, 'statuses': Task.Status.choices,
+        'task': task,
+        'comments': comments,
+        'attachments': attachments,
+        'comment_form': comment_form,
+        'update_form': update_form,
+        'attachment_form': attachment_form,
+        'statuses': Task.Status.choices,
     }
     return render(request, 'main/task_detail.html', context)
 
@@ -241,3 +283,21 @@ def department_tasks_view(request):
     department_tasks = Task.objects.filter(author__department=request.user.department).order_by('-created_at')
     context = {'tasks': department_tasks, 'department': request.user.department}
     return render(request, 'main/department_tasks.html', context)
+
+@login_required
+def update_task_status_view(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        task_id = data.get('task_id')
+        new_status = data.get('status')
+
+        task = get_object_or_404(Task, pk=task_id)
+
+        # Проверка прав: менять статус может только исполнитель
+        if task.assignee == request.user:
+            task.status = new_status
+            task.save()
+            return JsonResponse({'success': True})
+
+        return JsonResponse({'success': False, 'error': 'Permission denied'})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})

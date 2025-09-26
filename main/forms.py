@@ -1,6 +1,6 @@
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django import forms
-from .models import User, Department, Request, Task, Comment
+from .models import User, Department, Request, Task, Comment, Attachment
 
 class CustomUserCreationForm(UserCreationForm):
     class Meta:
@@ -21,7 +21,6 @@ class RequestForm(forms.ModelForm):
         model = Request
         # Добавляем поле 'department'
         fields = ['title', 'justification', 'request_type', 'department']
-
 
 class TaskCreationForm(forms.ModelForm):
     class Meta:
@@ -61,3 +60,8 @@ class TaskUpdateForm(forms.ModelForm):
             'deadline': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'assignee': forms.Select(attrs={'class': 'form-select'}),
         }
+
+class AttachmentForm(forms.ModelForm):
+    class Meta:
+        model = Attachment
+        fields = ['file']
