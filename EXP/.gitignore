@@ -1,0 +1,21 @@
+```
+    # Виртуальное окружение
+    venv/
+    .venv/
+
+    # Файлы IDE
+    .idea/
+    *.swp
+    *.swo
+
+    # База данных
+    *.sqlite3
+
+    # Статические файлы и медиа
+    staticfiles/
+    mediafiles/
+
+    # Python кэш
+    __pycache__/
+    *.pyc
+    ```

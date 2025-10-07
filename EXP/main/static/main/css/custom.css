@@ -1,0 +1,123 @@
+:root {
+	--bg: #f4f7f9;
+	--text: #2c3e50;
+	--muted: #6c7a89;
+	--primary: #3498db;
+	--success: #2ecc71;
+	--danger: #e74c3c;
+	--warning: #f1c40f;
+	--card-bg: #ffffff;
+	--shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+	--shadow-md: 0 8px 16px rgba(0,0,0,0.08);
+	--radius: 10px;
+    --gradient: linear-gradient(135deg, #2b90ff 0%, #5ee7df 100%);
+}
+
+/* Typography */
+body {
+	background: var(--bg);
+	color: var(--text);
+	font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+h1, h2, h3, .navbar-brand {
+	font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+	color: var(--text);
+}
+
+/* Cards and elevation */
+.card {
+	background: var(--card-bg);
+	border-radius: var(--radius);
+	box-shadow: var(--shadow-sm);
+	transition: box-shadow 220ms ease, transform 200ms ease;
+}
+.card[data-aos] { will-change: transform, opacity; }
+
+/* Subtle gradient header utility */
+.card-header {
+	background: linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0));
+}
+
+/* Task card hover */
+.task-card {
+	border: none;
+	box-shadow: var(--shadow-sm);
+}
+.task-card:hover {
+	transform: translateY(-4px);
+	box-shadow: var(--shadow-md);
+}
+
+/* Priority ribbons */
+.task-card.priority-high { border-left: 4px solid #e74c3c; }
+.task-card.priority-medium { border-left: 4px solid #f1c40f; }
+.task-card.priority-low { border-left: 4px solid #2ecc71; }
+
+/* Buttons */
+.btn-primary,
+.btn-outline-primary:hover {
+	background-color: var(--primary);
+	border-color: var(--primary);
+}
+.btn-outline-danger:hover {
+	color: #fff;
+	background-color: var(--danger);
+	border-color: var(--danger);
+}
+
+/* Links */
+a { color: var(--primary); }
+a:hover { color: #2187c8; }
+
+/* Alerts */
+.alert-success { background: rgba(46, 204, 113, 0.12); color: var(--success); }
+.alert-danger { background: rgba(231, 76, 60, 0.12); color: var(--danger); }
+.alert-warning { background: rgba(241, 196, 15, 0.12); color: #b07d00; }
+
+/* Forms */
+.form-control {
+	border-radius: 8px;
+	border-color: rgba(0,0,0,0.08);
+	transition: box-shadow 180ms ease, border-color 180ms ease;
+}
+.form-control:focus {
+	border-color: var(--primary);
+	box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+/* Kanban columns */
+.kanban-column {
+	background: #fff;
+	border-radius: var(--radius);
+	padding: 10px;
+	box-shadow: var(--shadow-sm);
+	min-height: 120px;
+}
+
+.kanban-column.drag-over {
+	outline: 2px dashed var(--primary);
+	background: rgba(52, 152, 219, 0.06);
+}
+
+/* Live highlight for newly added items */
+.flash-green {
+	animation: flash-green 1600ms ease-out 1;
+}
+@keyframes flash-green {
+	0% { background: rgba(46, 204, 113, 0.22); }
+	100% { background: transparent; }
+}
+
+
+/* Overdue task highlight */
+.overdue {
+	border: 2px solid #dc3545 !important; /* Bootstrap danger */
+	box-shadow: 0 0 5px rgba(220, 53, 69, 0.5);
+}
+
+/* Soon deadline highlight */
+.due-soon {
+	border: 2px solid #f39c12;
+	box-shadow: 0 0 5px rgba(243, 156, 18, 0.35);
+}
+

@@ -1,0 +1,99 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Управление заявками отдела{% endblock %}
+
+{% block content %}
+<!-- Заголовок и навигация -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Управление заявками отдела{% if department %}: {{ department.name }}{% endif %}</h1>
+    <a href="{% url 'request_list' %}" class="btn btn-outline-primary">
+        <i class="bi bi-arrow-left"></i> Мои заявки
+    </a>
+</div>
+
+<!-- Список заявок -->
+<div class="card">
+    <div class="card-body">
+        {% for req in requests %}
+            <div class="card mb-3 border-start border-{% if req.status == 'new' %}warning{% elif req.status == 'approved' %}success{% elif req.status == 'rejected' %}danger{% else %}secondary{% endif %} border-3">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h5 class="card-title mb-2">{{ req.title }}</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="card-text mb-1">
+                                        <span class="badge bg-{% if req.status == 'new' %}warning{% elif req.status == 'approved' %}success{% elif req.status == 'rejected' %}danger{% else %}secondary{% endif %}">
+                                            {{ req.get_status_display }}
+                                        </span>
+                                    </p>
+                                    <p class="card-text text-muted small mb-0">
+                                        <strong>Автор:</strong> {{ req.requester.get_full_name|default:req.requester.username }}
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="card-text text-muted small mb-0">
+                                        <strong>Тип:</strong> {{ req.get_request_type_display }}
+                                    </p>
+                                    <p class="card-text text-muted small mb-0">
+                                        <strong>Исполнитель:</strong> {{ req.assignee.get_full_name|default:"Не назначен" }}
+                                    </p>
+                                </div>
+                            </div>
+                            {% if req.justification %}
+                                <p class="card-text mt-2">{{ req.justification|truncatewords:25 }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="d-flex flex-column gap-2">
+                                {% if req.status == 'new' %}
+                                    <div class="btn-group" role="group">
+                                        <form method="post" action="" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="request_id" value="{{ req.pk }}" />
+                                            <input type="hidden" name="action" value="approve" />
+                                            <button type="submit" class="btn btn-success btn-sm">
+                                                <i class="bi bi-check-circle"></i> Одобрить
+                                            </button>
+                                        </form>
+                                        <form method="post" action="" class="d-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="request_id" value="{{ req.pk }}" />
+                                            <input type="hidden" name="action" value="reject" />
+                                            <button type="submit" class="btn btn-danger btn-sm">
+                                                <i class="bi bi-x-circle"></i> Отклонить
+                                            </button>
+                                        </form>
+                                    </div>
+                                {% else %}
+                                    <span class="badge bg-{% if req.status == 'approved' %}success{% elif req.status == 'rejected' %}danger{% else %}secondary{% endif %}">
+                                        {% if req.status == 'approved' %}
+                                            <i class="bi bi-check-circle"></i> Обработана
+                                        {% elif req.status == 'rejected' %}
+                                            <i class="bi bi-x-circle"></i> Отклонена
+                                        {% endif %}
+                                    </span>
+                                {% endif %}
+                                
+                                <!-- Кнопка удаления для руководителя -->
+                                <a href="{% url 'delete_request' pk=req.pk %}" class="btn btn-outline-danger btn-sm">
+                                    <i class="bi bi-trash"></i> Удалить
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="text-center py-5">
+                <div class="text-muted mb-3">
+                    <i class="bi bi-inbox" style="font-size: 4rem;"></i>
+                </div>
+                <h5 class="text-muted">Заявок не найдено</h5>
+                <p class="text-muted">В отделе нет заявок для обработки</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
