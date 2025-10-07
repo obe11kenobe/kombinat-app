@@ -1,0 +1,83 @@
+{% extends 'main/base.html' %}
+
+{% block title %}Редактирование задачи{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-body">
+                <h1 class="card-title h4 mb-3">Редактирование задачи</h1>
+                <p class="card-text text-muted mb-4">Внесите изменения в поля ниже и нажмите «Сохранить».</p>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">Название задачи</label>
+                        <input type="text" name="{{ form.title.name }}" id="{{ form.title.id_for_label }}" class="form-control" value="{{ form.title.value|default:'' }}" required>
+                        {% if form.title.errors %}
+                            <div class="text-danger small mt-1">{{ form.title.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">Описание</label>
+                        <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}" class="form-control" rows="4">{{ form.description.value|default:'' }}</textarea>
+                        {% if form.description.errors %}
+                            <div class="text-danger small mt-1">{{ form.description.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.assignee.id_for_label }}" class="form-label">Исполнитель</label>
+                        <select name="{{ form.assignee.name }}" id="{{ form.assignee.id_for_label }}" class="form-select" required>
+                            {% for value, label in form.assignee.field.choices %}
+                                <option value="{{ value }}" {% if form.assignee.value == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if form.assignee.errors %}
+                            <div class="text-danger small mt-1">{{ form.assignee.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.deadline.id_for_label }}" class="form-label">Срок выполнения</label>
+                        <input type="date" name="{{ form.deadline.name }}" id="{{ form.deadline.id_for_label }}" class="form-control" value="{{ form.deadline.value|default:'' }}">
+                        {% if form.deadline.errors %}
+                            <div class="text-danger small mt-1">{{ form.deadline.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.priority.id_for_label }}" class="form-label">Приоритет</label>
+                        <select name="{{ form.priority.name }}" id="{{ form.priority.id_for_label }}" class="form-select">
+                            {% for value, label in form.priority.field.choices %}
+                                <option value="{{ value }}" {% if form.priority.value == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if form.priority.errors %}
+                            <div class="text-danger small mt-1">{{ form.priority.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <a href="{% url 'task_detail' pk=task.pk %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Отмена
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Сохранить изменения
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
